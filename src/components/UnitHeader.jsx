@@ -5,7 +5,7 @@ export default function UnitHeader({ unit, subtitle }) {
         <img
           src={unit.logo}
           alt={unit.name}
-          className="h-20 w-auto object-contain mb-3"
+          className="h-36 w-36 rounded-full object-cover mb-4 shadow-lg ring-1 ring-white/10"
           onError={(e) => {
             e.currentTarget.style.display = 'none'
           }}

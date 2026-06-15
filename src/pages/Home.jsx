@@ -24,16 +24,14 @@ export default function Home() {
             className="flex flex-col items-center gap-4 rounded-2xl border border-gray-800 bg-gray-900/60 px-6 py-6 transition hover:border-gray-600"
           >
             {unit.logo ? (
-              <div className="flex h-24 w-full items-center justify-center rounded-xl bg-white px-6 py-4">
-                <img
-                  src={unit.logo}
-                  alt={unit.name}
-                  className="max-h-16 w-auto object-contain"
-                  onError={(e) => {
-                    e.currentTarget.parentElement.style.display = 'none'
-                  }}
-                />
-              </div>
+              <img
+                src={unit.logo}
+                alt={unit.name}
+                className="h-24 w-24 rounded-full object-cover shadow-lg ring-1 ring-white/10"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none'
+                }}
+              />
             ) : null}
             <div className="flex w-full items-center justify-between">
               <span className="text-lg font-medium">{unit.name}</span>

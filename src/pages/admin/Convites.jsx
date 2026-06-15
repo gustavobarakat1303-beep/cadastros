@@ -31,7 +31,7 @@ export default function Convites() {
     setLoading(true)
     const { data, error } = await supabase
       .from('dv_invites')
-      .select('id, client_name, client_phone, code, valid_until, status, used_at, validated_by')
+      .select('id, client_name, client_phone, birthdate, code, valid_until, status, used_at, validated_by')
       .order('code')
     if (error) {
       toast.error('Erro ao carregar convites.')
@@ -74,6 +74,7 @@ export default function Convites() {
     const rows = filtered.map((i) => ({
       Nome: i.client_name,
       Telefone: i.client_phone || '',
+      Aniversario: i.birthdate || '',
       Codigo: i.code,
       Status: effectiveStatus(i),
       Link: inviteLink(i.code),
@@ -175,7 +176,12 @@ export default function Convites() {
                   <tr key={i.id} className="border-t border-gray-800">
                     <td className="px-4 py-3">
                       <span className="font-medium">{i.client_name}</span>
-                      <span className="block text-xs text-gray-500">{i.client_phone}</span>
+                      <span className="block text-xs text-gray-500">
+                        {i.client_phone}
+                        {i.birthdate
+                          ? ` · 🎂 ${new Date(i.birthdate + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}`
+                          : ''}
+                      </span>
                     </td>
                     <td className="px-4 py-3 font-mono">{i.code}</td>
                     <td className="px-4 py-3">

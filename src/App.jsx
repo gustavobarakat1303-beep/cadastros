@@ -4,6 +4,9 @@ import Home from './pages/Home.jsx'
 import Registration from './pages/Registration.jsx'
 import Validator from './pages/Validator.jsx'
 import Invite from './pages/Invite.jsx'
+import FeijoadaRegister from './pages/feijoada/FeijoadaRegister.jsx'
+import FeijoadaInvite from './pages/feijoada/FeijoadaInvite.jsx'
+import FeijoadaValidator from './pages/feijoada/FeijoadaValidator.jsx'
 import AdminLogin from './pages/AdminLogin.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import AdminLayout from './components/AdminLayout.jsx'
@@ -25,6 +28,11 @@ export default function App() {
       <Route path="/register/:unit" element={<Registration />} />
       <Route path="/validar/:unit" element={<Validator />} />
       <Route path="/convite/:code" element={<Invite />} />
+
+      {/* Campanha Feijoada (auto-cadastro) — isolada */}
+      <Route path="/feijoada" element={<FeijoadaRegister />} />
+      <Route path="/feijoada/convite/:code" element={<FeijoadaInvite />} />
+      <Route path="/feijoada/validar" element={<FeijoadaValidator />} />
 
       {/* Painel administrativo */}
       <Route path="/admin" element={<Navigate to="/admin/login" replace />} />

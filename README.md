@@ -90,11 +90,15 @@ Usuários do painel administrativo.
 ## Autenticação
 
 ### Validador (operacional)
-PIN hardcoded em `src/pages/Validator.jsx`:
-- Nômade: `1234`
-- Pé de Manga: `5678`
+O PIN de cada unidade é configurado em `src/config/units.js`, lido das
+variáveis de ambiente `VITE_NOMADE_PIN` / `VITE_MANGA_PIN` com fallback:
+- Nômade: `VITE_NOMADE_PIN` (fallback `1234`)
+- Pé de Manga: `VITE_MANGA_PIN` (fallback `5678`)
 
-> ⚠️ Nunca usar `import.meta.env` para os PINs. Alterar diretamente no arquivo.
+> O validador opera apenas com o PIN, **sem sessão Supabase**. Por isso a
+> consumação do código é feita pela função RPC `dv_validate_code`
+> (`SECURITY DEFINER`), que faz lookup + marca como usado + registra a
+> validação de forma atômica — evitando validação dupla e respeitando o RLS.
 
 ### Admin
 Sessão armazenada via `sessionStorage`. Gerenciado em `src/pages/AdminLogin.jsx` e `src/components/ProtectedRoute.jsx`.
@@ -161,6 +165,8 @@ vercel deploy --prod
 
 ## Observações Importantes
 
-- **Firebase está presente no projeto mas NÃO deve ser usado.** O arquivo `src/firebase.js` e a página `src/pages/RegisterPage.jsx` são código morto — não estão roteados e não devem ser modificados ou referenciados.
-- Todas as operações de dados usam **exclusivamente Supabase**.
+- **Firebase NÃO é usado.** Os arquivos `firebase.json`, `.firebaserc`,
+  `firestore.rules` e `firestore.indexes.json` são legado de hospedagem e
+  não fazem parte do app — todas as operações de dados usam
+  **exclusivamente Supabase**.
 - A tabela `dv_registrations` contém a coluna `cpf` por compatibilidade histórica — o formulário ativo (`Registration.jsx`) não coleta CPF.

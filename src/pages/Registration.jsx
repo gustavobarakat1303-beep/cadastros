@@ -28,7 +28,6 @@ export default function Registration() {
   const [form, setForm] = useState({
     name: '',
     phone: '',
-    email: '',
     birthdate: '',
     discount_type_id: '',
   })
@@ -97,7 +96,6 @@ export default function Registration() {
         unit_slug: unit.slug,
         name,
         phone: phoneDigits,
-        email: form.email.trim() || null,
         birthdate: form.birthdate || null,
         discount_type_id: form.discount_type_id || null,
         code,
@@ -138,7 +136,6 @@ export default function Registration() {
             setForm({
               name: '',
               phone: '',
-              email: '',
               birthdate: '',
               discount_type_id: '',
             })
@@ -179,16 +176,6 @@ export default function Registration() {
               placeholder="(11) 99999-9999"
               className="input"
               required
-            />
-          </Field>
-
-          <Field label="E-mail">
-            <input
-              type="email"
-              value={form.email}
-              onChange={update('email')}
-              placeholder="voce@email.com"
-              className="input"
             />
           </Field>
 

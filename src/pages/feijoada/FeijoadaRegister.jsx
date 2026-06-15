@@ -18,7 +18,7 @@ function formatPhone(value) {
 export default function FeijoadaRegister() {
   const navigate = useNavigate()
   const unit = getUnit('nomade')
-  const [form, setForm] = useState({ name: '', phone: '' })
+  const [form, setForm] = useState({ name: '', phone: '', birthdate: '' })
   const [submitting, setSubmitting] = useState(false)
 
   const handleSubmit = async (e) => {
@@ -34,11 +34,16 @@ export default function FeijoadaRegister() {
       toast.error('Informe um telefone válido com DDD.')
       return
     }
+    if (!form.birthdate) {
+      toast.error('Informe sua data de nascimento.')
+      return
+    }
     setSubmitting(true)
     try {
       const { data, error } = await supabase.rpc('dv_create_feijoada_invite', {
         p_name: name,
         p_phone: form.phone,
+        p_birthdate: form.birthdate || null,
       })
       if (error) throw error
       if (data?.status === 'ok' && data?.code) {
@@ -100,6 +105,20 @@ export default function FeijoadaRegister() {
               className="input"
               required
             />
+          </label>
+
+          <label className="flex flex-col gap-1">
+            <span className="text-sm text-gray-400">Data de nascimento *</span>
+            <input
+              type="date"
+              value={form.birthdate}
+              onChange={(e) => setForm((f) => ({ ...f, birthdate: e.target.value }))}
+              className="input"
+              required
+            />
+            <span className="text-xs text-gray-600">
+              Pra gente te mimar no seu aniversário 🎂
+            </span>
           </label>
 
           <button

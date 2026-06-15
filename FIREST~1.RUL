@@ -1,0 +1,98 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ==========================================
+    // Funções auxiliares
+    // ==========================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // ==========================================
+    // Coleção: promotions
+    // Promoções ativas por unidade
+    // ==========================================
+    match /promotions/{promoId} {
+      // Qualquer um pode ler promoções ativas (necessário para o formulário público)
+      allow read: if resource.data.active == true;
+      // Somente admin pode criar/editar/deletar
+      allow write: if isAdmin();
+    }
+
+    // ==========================================
+    // Coleção: registrations
+    // Cadastros de clientes para promoções
+    // ==========================================
+    match /registrations/{regId} {
+      // Qualquer um pode criar um registro (formulário público)
+      allow create: if
+        request.resource.data.keys().hasAll([
+          'name', 'phone', 'email', 'unit', 'promotionId', 'code', 'status', 'createdAt'
+        ]) &&
+        request.resource.data.status == 'pending' &&
+        request.resource.data.name is string &&
+        request.resource.data.name.size() > 0 &&
+        request.resource.data.phone is string &&
+        request.resource.data.phone.size() >= 10;
+
+      // Apenas admin pode ler, atualizar ou deletar registros
+      allow read, update, delete: if isAdmin();
+    }
+
+    // ==========================================
+    // Coleção: validations
+    // Log de cada validação realizada
+    // ==========================================
+    match /validations/{valId} {
+      // Qualquer autenticado pode criar log de validação
+      // (o validador acessa via PIN — sem auth Firebase real)
+      // Portanto, permitimos create sem auth, mas com dados obrigatórios
+      allow create: if
+        request.resource.data.keys().hasAll([
+          'registrationId', 'code', 'unit', 'validatedAt', 'validatorId'
+        ]);
+
+      // Apenas admin lê o histórico
+      allow read: if isAdmin();
+
+      // Ninguém deleta — log imutável
+      allow update, delete: if false;
+    }
+
+    // ==========================================
+    // Coleção: units
+    // Configurações das unidades (cores, PIN, etc.)
+    // ==========================================
+    match /units/{unitId} {
+      // Qualquer um pode ler config da unidade (necessário para o tema visual)
+      allow read: if true;
+      // Apenas admin pode configurar
+      allow write: if isAdmin();
+    }
+
+    // ==========================================
+    // Coleção: admins
+    // Lista de UIDs autorizados como admin
+    // ==========================================
+    match /admins/{uid} {
+      allow read: if isAuthenticated() && request.auth.uid == uid;
+      // Escrita apenas via console Firebase (regra bloqueante)
+      allow write: if false;
+    }
+
+    // ==========================================
+    // Bloqueia tudo não especificado
+    // ==========================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

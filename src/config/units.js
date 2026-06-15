@@ -1,7 +1,7 @@
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || ''
-
-const logoUrl = (file) =>
-  `${SUPABASE_URL}/storage/v1/object/public/logos/${encodeURIComponent(file)}`
+// Logotipos empacotados no app (em /public) — garante carregamento confiável,
+// sem depender do Storage externo.
+const NOMADE_LOGO = '/logo-nomade.png'
+const MANGA_LOGO = '/logo-manga.png'
 
 // Configuração visual e de identidade de cada unidade.
 // O `slug` é o que aparece nas rotas (/register/:unit, /validar/:unit).
@@ -10,7 +10,7 @@ export const UNITS = {
     slug: 'nomade',
     name: 'Nômade',
     fullName: 'Nômade Restaurante Bar',
-    logo: logoUrl('Logo Nomade Escurol.png'),
+    logo: NOMADE_LOGO,
     accent: '#c2956a',
     accentClass: 'bg-[#c2956a]',
     accentText: 'text-[#c2956a]',
@@ -23,7 +23,7 @@ export const UNITS = {
     slug: 'manga',
     name: 'Pé de Manga',
     fullName: 'Pé de Manga',
-    logo: logoUrl('Logo PedeManga.png'),
+    logo: MANGA_LOGO,
     accent: '#e8a13c',
     accentClass: 'bg-[#e8a13c]',
     accentText: 'text-[#e8a13c]',

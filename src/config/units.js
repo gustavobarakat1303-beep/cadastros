@@ -17,7 +17,8 @@ export const UNITS = {
     // Prefixo dos códigos de cupom desta unidade (ex.: NM-AB12CD).
     codePrefix: 'NM',
     // PIN do validador — lido do ambiente com fallback seguro.
-    pin: import.meta.env.VITE_NOMADE_PIN || '1234',
+    // .trim() evita falha se a variável tiver espaço sobrando.
+    pin: (import.meta.env.VITE_NOMADE_PIN || '1234').trim(),
   },
   manga: {
     slug: 'manga',
@@ -28,7 +29,7 @@ export const UNITS = {
     accentClass: 'bg-[#e8a13c]',
     accentText: 'text-[#e8a13c]',
     codePrefix: 'PM',
-    pin: import.meta.env.VITE_MANGA_PIN || '5678',
+    pin: (import.meta.env.VITE_MANGA_PIN || '5678').trim(),
   },
 }
 

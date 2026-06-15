@@ -15,10 +15,15 @@ function formatPhone(value) {
   return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`
 }
 
+const MESES = [
+  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
+]
+
 export default function FeijoadaRegister() {
   const navigate = useNavigate()
   const unit = getUnit('nomade')
-  const [form, setForm] = useState({ name: '', phone: '', birthdate: '' })
+  const [form, setForm] = useState({ name: '', phone: '', birthDay: '', birthMonth: '' })
   const [submitting, setSubmitting] = useState(false)
 
   const handleSubmit = async (e) => {
@@ -34,8 +39,17 @@ export default function FeijoadaRegister() {
       toast.error('Informe um telefone válido com DDD.')
       return
     }
-    if (!form.birthdate) {
-      toast.error('Informe sua data de nascimento.')
+    if (!form.birthDay || !form.birthMonth) {
+      toast.error('Informe o dia e o mês do seu aniversário.')
+      return
+    }
+    // Guardamos só dia/mês — usamos um ano neutro (2000) internamente.
+    const dd = String(form.birthDay).padStart(2, '0')
+    const mm = String(form.birthMonth).padStart(2, '0')
+    const iso = `2000-${mm}-${dd}`
+    const test = new Date(`${iso}T00:00:00`)
+    if (Number.isNaN(test.getTime()) || test.getUTCDate() !== Number(form.birthDay)) {
+      toast.error('Aniversário inválido.')
       return
     }
     setSubmitting(true)
@@ -43,7 +57,7 @@ export default function FeijoadaRegister() {
       const { data, error } = await supabase.rpc('dv_create_feijoada_invite', {
         p_name: name,
         p_phone: form.phone,
-        p_birthdate: form.birthdate || null,
+        p_birthdate: iso,
       })
       if (error) throw error
       if (data?.status === 'ok' && data?.code) {
@@ -107,19 +121,36 @@ export default function FeijoadaRegister() {
             />
           </label>
 
-          <label className="flex flex-col gap-1">
-            <span className="text-sm text-gray-400">Data de nascimento *</span>
-            <input
-              type="date"
-              value={form.birthdate}
-              onChange={(e) => setForm((f) => ({ ...f, birthdate: e.target.value }))}
-              className="input"
-              required
-            />
+          <div className="flex flex-col gap-1">
+            <span className="text-sm text-gray-400">Aniversário (dia e mês) *</span>
+            <div className="flex gap-3">
+              <select
+                value={form.birthDay}
+                onChange={(e) => setForm((f) => ({ ...f, birthDay: e.target.value }))}
+                className="input"
+                required
+              >
+                <option value="">Dia</option>
+                {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
+              <select
+                value={form.birthMonth}
+                onChange={(e) => setForm((f) => ({ ...f, birthMonth: e.target.value }))}
+                className="input"
+                required
+              >
+                <option value="">Mês</option>
+                {MESES.map((nome, idx) => (
+                  <option key={nome} value={idx + 1}>{nome}</option>
+                ))}
+              </select>
+            </div>
             <span className="text-xs text-gray-600">
-              Pra gente te mimar no seu aniversário 🎂
+              Só o dia e o mês — pra gente te mimar no seu aniversário 🎂
             </span>
-          </label>
+          </div>
 
           <button
             type="submit"

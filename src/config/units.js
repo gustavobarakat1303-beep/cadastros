@@ -35,3 +35,13 @@ export const UNITS = {
 export const getUnit = (slug) => UNITS[slug] || null
 
 export const UNIT_SLUGS = Object.keys(UNITS)
+
+// Mapeia cada domínio customizado para a sua unidade. Ao acessar a raiz "/"
+// por um desses domínios, o app abre direto o cadastro da unidade.
+export const HOST_UNIT = {
+  'cadastro.nomaderestaurantebar.com.br': 'nomade',
+  'cadastro.pedemanga.com.br': 'manga',
+}
+
+export const getUnitByHost = (host) =>
+  HOST_UNIT[(host || '').toLowerCase().replace(/^www\./, '')] || null

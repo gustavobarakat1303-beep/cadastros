@@ -1,7 +1,14 @@
-import { Link } from 'react-router-dom'
-import { UNITS } from '../config/units.js'
+import { Link, Navigate } from 'react-router-dom'
+import { UNITS, getUnitByHost } from '../config/units.js'
 
 export default function Home() {
+  // Em domínio customizado (cadastro.<unidade>) a raiz abre direto o cadastro.
+  const hostUnit =
+    typeof window !== 'undefined' ? getUnitByHost(window.location.hostname) : null
+  if (hostUnit) {
+    return <Navigate to={`/register/${hostUnit}`} replace />
+  }
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 py-12">
       <h1 className="text-3xl font-bold mb-2 text-center">Casa dos Bares</h1>

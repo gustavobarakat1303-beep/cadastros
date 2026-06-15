@@ -5,6 +5,7 @@ import {
   Users,
   CheckSquare,
   Tag,
+  Ticket,
   Cake,
   Percent,
   LogOut,
@@ -18,6 +19,7 @@ const NAV = [
   { to: '/admin/clientes', label: 'Clientes', Icon: Users },
   { to: '/admin/validacoes', label: 'Validações', Icon: CheckSquare },
   { to: '/admin/promocoes', label: 'Promoções', Icon: Tag },
+  { to: '/admin/convites', label: 'Convites', Icon: Ticket },
   { to: '/admin/aniversarios', label: 'Aniversários', Icon: Cake },
   { to: '/admin/tipos-desconto', label: 'Tipos de desconto', Icon: Percent },
 ]

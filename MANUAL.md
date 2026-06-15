@@ -104,7 +104,30 @@ validação.
 
 ---
 
-## 8. Identidade visual (logotipos)
+## 8. Convites Nômade (cortesia via WhatsApp)
+
+Convite especial enviado por link de WhatsApp aos clientes já cadastrados do Nômade.
+
+**Fluxo:**
+1. A equipe pega o link do convite em **Admin → Convites** (botão **Link** por cliente,
+   ou **Exportar links** em CSV) e envia pelo WhatsApp.
+2. O cliente abre o link `/convite/NOMADE-000123` e vê o convite, o código e um QR Code.
+3. No restaurante, a equipe valida no **Validador** (`/validar/nomade`): escaneia o QR,
+   digita o código `NOMADE-...` **ou** busca o cliente por nome/telefone.
+4. Ao validar, o convite vira **Usado** (data/hora + nome do operador registrados).
+   O cliente **não** valida sozinho — só a equipe.
+
+**Benefício:** 1 prato executivo cortesia, mediante 1 acompanhante pagante. **Validade:** até 30/06.
+
+**Status do convite:** `ativo` · `usado` · `expirado` (após a validade) · `cancelado` (pela administração, em **Admin → Convites**).
+
+> A base inicial tem **241 convites** (`NOMADE-000001`…`NOMADE-000241`), um por cliente
+> do Cartão Fidelidade. Os dados ficam só no banco; o acesso público é feito por funções
+> RPC seguras (a tabela não é enumerável por terceiros).
+
+---
+
+## 9. Identidade visual (logotipos)
 
 Os logotipos de cada unidade já estão integrados ao app e são exibidos nas telas
 de cadastro/validação. Ficam no Storage público do Supabase (bucket `logos`):
@@ -113,7 +136,7 @@ de cadastro/validação. Ficam no Storage público do Supabase (bucket `logos`):
 
 ---
 
-## 9. Formato dos códigos
+## 10. Formato dos códigos
 
 | Unidade | Prefixo | Exemplo |
 |---------|---------|---------|
@@ -124,7 +147,7 @@ Caracteres ambíguos (0/O, 1/I) são evitados para facilitar a digitação manua
 
 ---
 
-## 10. Stack técnica (resumo)
+## 11. Stack técnica (resumo)
 
 - **Frontend:** React 18 + Vite 5 + Tailwind CSS 3
 - **Banco/Auth/Storage:** Supabase (projeto `rfggzdohnchnnmavphrm`)

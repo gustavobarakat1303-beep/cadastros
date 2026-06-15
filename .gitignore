@@ -3,3 +3,6 @@ dist
 .vercel
 .DS_Store
 *.local
+
+# Dados pessoais (PII) — apenas no banco, nunca versionar
+data/

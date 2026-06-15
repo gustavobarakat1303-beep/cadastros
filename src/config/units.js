@@ -14,6 +14,8 @@ export const UNITS = {
     accent: '#c2956a',
     accentClass: 'bg-[#c2956a]',
     accentText: 'text-[#c2956a]',
+    // Prefixo dos códigos de cupom desta unidade (ex.: NM-AB12CD).
+    codePrefix: 'NM',
     // PIN do validador — lido do ambiente com fallback seguro.
     pin: import.meta.env.VITE_NOMADE_PIN || '1234',
   },
@@ -25,6 +27,7 @@ export const UNITS = {
     accent: '#e8a13c',
     accentClass: 'bg-[#e8a13c]',
     accentText: 'text-[#e8a13c]',
+    codePrefix: 'PM',
     pin: import.meta.env.VITE_MANGA_PIN || '5678',
   },
 }

@@ -10,6 +10,8 @@ Clientes se cadastram via QR Code e recebem um código único. Na entrada do res
 
 **URL de produção:** `https://casa-dos-bares.vercel.app`
 
+> 📘 **Manual de operação (passo a passo, acessos e senhas):** [`MANUAL.md`](./MANUAL.md)
+
 **Domínios customizados:**
 - `https://cadastro.nomaderestaurantebar.com.br` → unidade Nômade
 - `https://cadastro.pedemanga.com.br` → unidade Pé de Manga
@@ -113,6 +115,22 @@ https://casa-dos-bares.vercel.app/validar/{unit_slug}?code={code}
 ```
 
 O validador lê o parâmetro `?code=` e preenche o campo automaticamente.
+
+Os códigos são gerados com o prefixo da unidade: **`NM-`** (Nômade) e
+**`PM-`** (Pé de Manga) — ex.: `NM-AB12CD`.
+
+---
+
+## Base do Cartão Fidelidade (Nômade)
+
+A base de fidelidade do Increasify (extração de 13/06/2026, **241 clientes**)
+está carregada no banco sob o tipo de desconto `CARTÃO FIDELIDADE` da unidade
+Nômade. Cada cliente tem um código único `NM-XXXXXX` pronto para validação, e os
+aniversariantes aparecem em **Admin → Aniversários**.
+
+> Os dados pessoais (nome, telefone, nascimento) residem **apenas no banco**
+> (Supabase) e **não** são versionados no repositório, por privacidade. A
+> exportação está disponível em **Admin → Clientes → Exportar CSV**.
 
 ---
 

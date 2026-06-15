@@ -92,7 +92,7 @@ export default function Registration() {
 
     setSubmitting(true)
     try {
-      const code = generateCode()
+      const code = generateCode(6, unit.codePrefix)
       const { error } = await supabase.from('dv_registrations').insert({
         unit_slug: unit.slug,
         name,

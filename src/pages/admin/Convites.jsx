@@ -74,7 +74,9 @@ export default function Convites() {
     const rows = filtered.map((i) => ({
       Nome: i.client_name,
       Telefone: i.client_phone || '',
-      Aniversario: i.birthdate || '',
+      Aniversario: i.birthdate
+        ? new Date(i.birthdate + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+        : '',
       Codigo: i.code,
       Status: effectiveStatus(i),
       Link: inviteLink(i.code),

@@ -1,42 +1,53 @@
-import { useEffect, useRef } from 'react'
-import { useLocation } from 'react-router-dom'
+/**
+ * MetaPixelTracker.jsx
+ * Componente sem UI que:
+ * 1. Dispara PageView sempre que a rota muda (navegação SPA)
+ * 2. Dispara evento Contact ao clicar em links do WhatsApp oficial do Nômade
+ *
+ * Deve ser montado UMA VEZ dentro do <Router>, acima das rotas.
+ * Exemplo de uso em App.jsx:
+ *
+ *   import MetaPixelTracker from './components/MetaPixelTracker';
+ *   ...
+ *   <Router>
+ *     <MetaPixelTracker />
+ *     <Routes>...</Routes>
+ *   </Router>
+ */
 
-import { isMetaTrackedPath, trackMetaEvent } from '../lib/metaPixel.js'
+import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+import { trackPageView, trackContact } from '../lib/metaPixel';
 
-const WHATSAPP_LINK = /(?:wa\.me|api\.whatsapp\.com|web\.whatsapp\.com|whatsapp:\/\/)/i
+// Número oficial do Nômade — qualquer link com esse número dispara Contact
+const NOMADE_WHATSAPP = '5511916547785';
 
 export default function MetaPixelTracker() {
-  const location = useLocation()
-  const previousPath = useRef(window.location.pathname)
+  const location = useLocation();
 
+  // PageView em toda mudança de rota permitida
   useEffect(() => {
-    const currentPath = location.pathname
+    trackPageView();
+  }, [location.pathname]);
 
-    if (previousPath.current !== currentPath) {
-      previousPath.current = currentPath
-
-      if (isMetaTrackedPath(currentPath)) {
-        trackMetaEvent('PageView')
-      }
-    }
-  }, [location.pathname])
-
+  // Listener global para cliques em links de WhatsApp do Nômade
   useEffect(() => {
-    const trackWhatsAppClick = (event) => {
-      const link = event.target.closest?.('a[href]')
-      const href = link?.getAttribute('href') || ''
+    function handleClick(e) {
+      const anchor = e.target.closest('a[href]');
+      if (!anchor) return;
 
-      if (WHATSAPP_LINK.test(href)) {
-        trackMetaEvent('Contact', {
-          content_name: 'WhatsApp',
-          content_category: 'Feijoada Nômade',
-        })
+      const href = anchor.getAttribute('href') || '';
+      if (
+        href.includes('wa.me/' + NOMADE_WHATSAPP) ||
+        href.includes('api.whatsapp.com/send') && href.includes(NOMADE_WHATSAPP)
+      ) {
+        trackContact();
       }
     }
 
-    document.addEventListener('click', trackWhatsAppClick)
-    return () => document.removeEventListener('click', trackWhatsAppClick)
-  }, [])
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, []);
 
-  return null
+  return null;
 }

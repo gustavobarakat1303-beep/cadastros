@@ -7,6 +7,8 @@ import { trackMetaEvent } from '../../lib/metaPixel.js'
 import { supabase } from '../../lib/supabase.js'
 
 const onlyDigits = (s) => (s || '').replace(/\D/g, '')
+const WHATSAPP_URL =
+  'https://wa.me/5511916547785?text=Ol%C3%A1%2C%20N%C3%B4made!%20Quero%20saber%20mais%20sobre%20a%20Feijoada%20em%20dobro.'
 
 function formatPhone(value) {
   const d = onlyDigits(value).slice(0, 11)
@@ -172,6 +174,16 @@ export default function FeijoadaRegister() {
             {submitting ? 'Gerando…' : 'Quero meu convite'}
           </button>
         </form>
+
+        <a
+          href={WHATSAPP_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          data-meta-role="whatsapp-cta"
+          className="mt-4 flex w-full items-center justify-center rounded-lg border border-[#c2956a] px-5 py-3 text-center font-semibold text-[#c2956a] transition hover:bg-[#c2956a]/10"
+        >
+          Falar com o Nômade no WhatsApp
+        </a>
 
         <Link to="/" className="mt-8 text-xs text-gray-600 hover:text-gray-400">
           Casa dos Bares

@@ -1,207 +1,239 @@
-import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
-import toast from 'react-hot-toast'
+/**
+ * FeijoadaRegister.jsx
+ * Página de cadastro da campanha Feijoada Cortesia — Nômade Bar & Restaurante.
+ * Rota: /feijoada
+ *
+ * Fluxo:
+ * 1. Cliente preenche nome, telefone, e-mail (opcional) e data de nascimento
+ * 2. Submit → grava em dv_registrations (unit_slug: 'nomade', discount_type: 'FEIJOADA CORTESIA')
+ * 3. Sucesso → dispara CompleteRegistration + Lead → redireciona para /feijoada/convite/:code
+ * 4. Erro → exibe mensagem sem disparar eventos
+ *
+ * Eventos Meta Pixel disparados:
+ * - CompleteRegistration: imediatamente após confirmação do backend
+ * - Lead: logo após CompleteRegistration, antes do redirect
+ */
 
-import { getUnit } from '../../config/units.js'
-import { trackMetaEvent } from '../../lib/metaPixel.js'
-import { supabase } from '../../lib/supabase.js'
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '../../lib/supabaseClient';
+import { trackCompleteRegistration, trackLead } from '../../lib/metaPixel';
 
-const onlyDigits = (s) => (s || '').replace(/\D/g, '')
-const WHATSAPP_URL =
-  'https://wa.me/5511916547785?text=Ol%C3%A1%2C%20N%C3%B4made!%20Quero%20saber%20mais%20sobre%20a%20Feijoada%20em%20dobro.'
+// ID do tipo de desconto "FEIJOADA CORTESIA" (unidade nomade) — confirmar no admin
+const DISCOUNT_TYPE_SLUG = 'FEIJOADA CORTESIA';
+const UNIT_SLUG = 'nomade';
 
-function formatPhone(value) {
-  const d = onlyDigits(value).slice(0, 11)
-  if (d.length <= 2) return d
-  if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`
-  if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`
-  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`
+function generateCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = 'NM-';
+  for (let i = 0; i < 6; i++) {
+    code += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return code;
 }
 
-const MESES = [
-  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
-]
-
 export default function FeijoadaRegister() {
-  const navigate = useNavigate()
-  const unit = getUnit('nomade')
-  const [form, setForm] = useState({ name: '', phone: '', birthDay: '', birthMonth: '' })
-  const [submitting, setSubmitting] = useState(false)
+  const navigate = useNavigate();
+  const [form, setForm] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    birthdate: '',
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    if (submitting) return
-    const name = form.name.trim()
-    const phoneDigits = onlyDigits(form.phone)
-    if (name.length < 2) {
-      toast.error('Informe seu nome.')
-      return
+  function handleChange(e) {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError('');
+
+    if (!form.name.trim() || !form.phone.trim() || !form.birthdate) {
+      setError('Preencha nome, telefone e data de nascimento.');
+      return;
     }
-    if (phoneDigits.length < 10) {
-      toast.error('Informe um telefone válido com DDD.')
-      return
-    }
-    if (!form.birthDay || !form.birthMonth) {
-      toast.error('Informe o dia e o mês do seu aniversário.')
-      return
-    }
-    // Guardamos só dia/mês — usamos um ano neutro (2000) internamente.
-    const dd = String(form.birthDay).padStart(2, '0')
-    const mm = String(form.birthMonth).padStart(2, '0')
-    const iso = `2000-${mm}-${dd}`
-    const test = new Date(`${iso}T00:00:00`)
-    if (Number.isNaN(test.getTime()) || test.getUTCDate() !== Number(form.birthDay)) {
-      toast.error('Aniversário inválido.')
-      return
-    }
-    setSubmitting(true)
+
+    setLoading(true);
+
     try {
-      const { data, error } = await supabase.rpc('dv_create_feijoada_invite', {
-        p_name: name,
-        p_phone: form.phone,
-        p_birthdate: iso,
-      })
-      if (error) throw error
-      if (data?.status === 'ok' && data?.code) {
-        trackMetaEvent('CompleteRegistration', {
-          content_name: 'Cadastro Feijoada Nômade',
-          content_category: 'Landing Page',
-          status: 'completed',
-        })
-        trackMetaEvent('Lead', {
-          content_name: 'Voucher Feijoada Nômade',
-          content_category: 'Voucher',
-          status: 'generated',
-        })
-        navigate(`/feijoada/convite/${data.code}`)
-      } else if (data?.status === 'invalid') {
-        toast.error(data.reason === 'telefone' ? 'Telefone inválido.' : 'Nome inválido.')
-      } else {
-        toast.error('Não foi possível gerar o convite. Tente novamente.')
+      // 1. Buscar o discount_type_id de "FEIJOADA CORTESIA" para nomade
+      const { data: discountType, error: dtError } = await supabase
+        .from('dv_discount_types')
+        .select('id')
+        .eq('name', DISCOUNT_TYPE_SLUG)
+        .eq('unit_slug', UNIT_SLUG)
+        .eq('active', true)
+        .single();
+
+      if (dtError || !discountType) {
+        throw new Error('Tipo de desconto não encontrado. Contate o suporte.');
       }
+
+      // 2. Gerar código único
+      const code = generateCode();
+
+      // 3. Inserir cadastro
+      const { error: insertError } = await supabase
+        .from('dv_registrations')
+        .insert({
+          unit_slug: UNIT_SLUG,
+          name: form.name.trim(),
+          phone: form.phone.trim(),
+          email: form.email.trim() || null,
+          birthdate: form.birthdate,
+          code,
+          used: false,
+          discount_type_id: discountType.id,
+        });
+
+      if (insertError) {
+        // Código duplicado (raro) — tentar uma vez com novo código
+        if (insertError.code === '23505') {
+          throw new Error('Ocorreu um erro ao gerar seu convite. Tente novamente.');
+        }
+        throw insertError;
+      }
+
+      // 4. Sucesso — disparar eventos Meta Pixel ANTES do redirect
+      trackCompleteRegistration();
+      trackLead();
+
+      // 5. Redirecionar para a página do voucher
+      navigate(`/feijoada/convite/${code}`);
+
     } catch (err) {
-      console.error(err)
-      toast.error('Erro ao gerar o convite. Tente novamente.')
+      console.error('[FeijoadaRegister]', err);
+      setError(err.message || 'Erro ao processar cadastro. Tente novamente.');
     } finally {
-      setSubmitting(false)
+      setLoading(false);
     }
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center px-6 py-12">
-      <div className="w-full max-w-sm flex flex-col items-center">
-        {unit?.logo ? (
+    <main className="min-h-screen bg-[#110f0d] flex items-center justify-center px-4 py-12">
+      <div className="w-full max-w-md">
+
+        {/* Logo */}
+        <div className="flex justify-center mb-8">
           <img
-            src={unit.logo}
-            alt="Nômade"
-            className="h-24 w-24 rounded-full object-cover shadow-lg ring-1 ring-white/10 mb-5"
+            src="https://rfggzdohnchnnmavphrm.supabase.co/storage/v1/object/public/logos/Logo%20Nomade%20Escurol.png"
+            alt="Nômade Bar & Restaurante"
+            className="h-14 object-contain"
           />
-        ) : null}
+        </div>
 
-        <p className="text-4xl">🍲</p>
-        <h1 className="mt-2 text-center text-2xl font-bold leading-snug">
-          Feijoada em dobro no Nômade
-        </h1>
-        <p className="mt-3 text-center text-gray-300">
-          Cadastre-se e ganhe seu convite: <span className="font-semibold">peça 1 feijoada
-          e a 2ª é por nossa conta</span>. 💛
-        </p>
+        {/* Cabeçalho */}
+        <div className="text-center mb-8">
+          <p className="text-[#c8b89a] text-xs tracking-widest uppercase font-light mb-3">
+            Convite especial
+          </p>
+          <h1 className="text-[#f4efe8] text-4xl font-black uppercase tracking-tight leading-none mb-2">
+            1 Feijoada<br />Cortesia
+          </h1>
+          <p className="text-[#c8b89a] text-sm tracking-wider mt-3">
+            com 1 acompanhante pagante
+          </p>
+          <div className="w-16 h-px bg-[#c8b89a] opacity-40 mx-auto mt-4" />
+          <p className="text-[#c8b89a] text-xs tracking-widest uppercase opacity-60 mt-4">
+            Válido aos sábados até as 14h
+          </p>
+        </div>
 
-        <form onSubmit={handleSubmit} className="mt-8 flex w-full flex-col gap-4">
-          <label className="flex flex-col gap-1">
-            <span className="text-sm text-gray-400">Nome completo *</span>
+        {/* Formulário */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-[#c8b89a] text-xs tracking-widest uppercase mb-1">
+              Nome completo *
+            </label>
             <input
               type="text"
+              name="name"
               value={form.name}
-              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              placeholder="Seu nome"
-              className="input"
+              onChange={handleChange}
               required
+              className="w-full bg-[#1a1714] border border-[#c8b89a]/30 text-[#f4efe8] px-4 py-3 text-sm focus:outline-none focus:border-[#c8b89a]/70 placeholder-[#c8b89a]/30"
+              placeholder="Seu nome"
             />
-          </label>
+          </div>
 
-          <label className="flex flex-col gap-1">
-            <span className="text-sm text-gray-400">Telefone (WhatsApp) *</span>
+          <div>
+            <label className="block text-[#c8b89a] text-xs tracking-widest uppercase mb-1">
+              WhatsApp *
+            </label>
             <input
               type="tel"
-              inputMode="numeric"
+              name="phone"
               value={form.phone}
-              onChange={(e) => setForm((f) => ({ ...f, phone: formatPhone(e.target.value) }))}
-              placeholder="(11) 99999-9999"
-              className="input"
+              onChange={handleChange}
               required
+              className="w-full bg-[#1a1714] border border-[#c8b89a]/30 text-[#f4efe8] px-4 py-3 text-sm focus:outline-none focus:border-[#c8b89a]/70 placeholder-[#c8b89a]/30"
+              placeholder="(11) 99999-9999"
             />
-          </label>
-
-          <div className="flex flex-col gap-1">
-            <span className="text-sm text-gray-400">Aniversário (dia e mês) *</span>
-            <div className="flex gap-3">
-              <select
-                value={form.birthDay}
-                onChange={(e) => setForm((f) => ({ ...f, birthDay: e.target.value }))}
-                className="input"
-                required
-              >
-                <option value="">Dia</option>
-                {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
-                  <option key={d} value={d}>{d}</option>
-                ))}
-              </select>
-              <select
-                value={form.birthMonth}
-                onChange={(e) => setForm((f) => ({ ...f, birthMonth: e.target.value }))}
-                className="input"
-                required
-              >
-                <option value="">Mês</option>
-                {MESES.map((nome, idx) => (
-                  <option key={nome} value={idx + 1}>{nome}</option>
-                ))}
-              </select>
-            </div>
-            <span className="text-xs text-gray-600">
-              Só o dia e o mês — pra gente te mimar no seu aniversário 🎂
-            </span>
           </div>
+
+          <div>
+            <label className="block text-[#c8b89a] text-xs tracking-widest uppercase mb-1">
+              E-mail
+            </label>
+            <input
+              type="email"
+              name="email"
+              value={form.email}
+              onChange={handleChange}
+              className="w-full bg-[#1a1714] border border-[#c8b89a]/30 text-[#f4efe8] px-4 py-3 text-sm focus:outline-none focus:border-[#c8b89a]/70 placeholder-[#c8b89a]/30"
+              placeholder="seu@email.com (opcional)"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[#c8b89a] text-xs tracking-widest uppercase mb-1">
+              Data de nascimento *
+            </label>
+            <input
+              type="date"
+              name="birthdate"
+              value={form.birthdate}
+              onChange={handleChange}
+              required
+              className="w-full bg-[#1a1714] border border-[#c8b89a]/30 text-[#f4efe8] px-4 py-3 text-sm focus:outline-none focus:border-[#c8b89a]/70"
+            />
+          </div>
+
+          {error && (
+            <p className="text-red-400 text-xs text-center">{error}</p>
+          )}
 
           <button
             type="submit"
-            data-meta-role="lead-cta"
-            disabled={submitting}
-            className={`mt-2 rounded-lg ${unit.accentClass} px-5 py-3 font-semibold text-black transition disabled:opacity-50`}
+            disabled={loading}
+            className="w-full border border-[#c8b89a]/60 text-[#c8b89a] py-4 text-sm tracking-widest uppercase font-semibold hover:bg-[#c8b89a]/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2"
           >
-            {submitting ? 'Gerando…' : 'Quero meu convite'}
+            {loading ? 'Gerando convite...' : 'Quero meu convite'}
           </button>
         </form>
 
-        <a
-          href={WHATSAPP_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          data-meta-role="whatsapp-cta"
-          className="mt-4 flex w-full items-center justify-center rounded-lg border border-[#c2956a] px-5 py-3 text-center font-semibold text-[#c2956a] transition hover:bg-[#c2956a]/10"
-        >
-          Falar com o Nômade no WhatsApp
-        </a>
+        {/* Rodapé */}
+        <div className="text-center mt-8 space-y-2">
+          <p className="text-[#c8b89a]/50 text-xs tracking-widest uppercase">
+            Nômade Bar & Restaurante
+          </p>
+          <p className="text-[#c8b89a]/40 text-xs">
+            Av. Rebouças, 3400 — Pinheiros, São Paulo
+          </p>
+          <a
+            href={`https://wa.me/5511916547785?text=${encodeURIComponent('Olá! Tenho uma dúvida sobre a Feijoada Cortesia.')}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block text-[#c8b89a]/50 text-xs underline underline-offset-2 mt-1"
+          >
+            Falar com o Nômade no WhatsApp
+          </a>
+        </div>
 
-        <Link to="/" className="mt-8 text-xs text-gray-600 hover:text-gray-400">
-          Casa dos Bares
-        </Link>
       </div>
-
-      <style>{`
-        .input {
-          width: 100%;
-          border-radius: 0.5rem;
-          border: 1px solid #374151;
-          background-color: #111827;
-          padding: 0.625rem 0.75rem;
-          color: #f9fafb;
-          outline: none;
-        }
-        .input:focus { border-color: #6b7280; }
-      `}</style>
-    </div>
-  )
+    </main>
+  );
 }

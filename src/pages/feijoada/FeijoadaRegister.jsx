@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 
 import { getUnit } from '../../config/units.js'
+import { trackMetaEvent } from '../../lib/metaPixel.js'
 import { supabase } from '../../lib/supabase.js'
 
 const onlyDigits = (s) => (s || '').replace(/\D/g, '')
@@ -61,6 +62,16 @@ export default function FeijoadaRegister() {
       })
       if (error) throw error
       if (data?.status === 'ok' && data?.code) {
+        trackMetaEvent('CompleteRegistration', {
+          content_name: 'Cadastro Feijoada Nômade',
+          content_category: 'Landing Page',
+          status: 'completed',
+        })
+        trackMetaEvent('Lead', {
+          content_name: 'Voucher Feijoada Nômade',
+          content_category: 'Voucher',
+          status: 'generated',
+        })
         navigate(`/feijoada/convite/${data.code}`)
       } else if (data?.status === 'invalid') {
         toast.error(data.reason === 'telefone' ? 'Telefone inválido.' : 'Nome inválido.')
@@ -154,6 +165,7 @@ export default function FeijoadaRegister() {
 
           <button
             type="submit"
+            data-meta-role="lead-cta"
             disabled={submitting}
             className={`mt-2 rounded-lg ${unit.accentClass} px-5 py-3 font-semibold text-black transition disabled:opacity-50`}
           >

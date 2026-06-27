@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { QRCodeSVG } from 'qrcode.react'
+import { QRCodeCanvas } from 'qrcode.react'
 import { supabase } from '../../lib/supabase.js'
 
 const NOMADE_WA = 'https://wa.me/5511916547785?text='
@@ -75,7 +75,7 @@ export default function FeijoadaVoucher() {
         </div>
         <div className="border border-[#c8b89a]/20 p-6 flex flex-col items-center gap-5 mb-6">
           <div className="bg-[#f4efe8] p-3">
-            <QRCodeSVG value={validationUrl} size={192} bgColor="#f4efe8" fgColor="#1a1714" level="M" />
+            <QRCodeCanvas value={validationUrl} size={192} bgColor="#f4efe8" fgColor="#1a1714" level="M" />
           </div>
           <div className="text-center">
             <p className="text-[#c8b89a]/60 text-xs tracking-widest uppercase mb-1">Código do convite</p>

@@ -1,29 +1,22 @@
-/**
- * FeijoadaVoucher.jsx
- * Página do voucher/QR Code gerado após cadastro bem-sucedido.
- * Rota: /feijoada/convite/:code
- */
+import { useEffect, useState } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import { QRCodeSVG } from 'qrcode.react'
+import { supabase } from '../../lib/supabase.js'
 
-import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { QRCodeSVG } from 'qrcode.react';
-import { supabase } from '../../lib/supabaseClient';
-
-const NOMADE_WHATSAPP_BASE = 'https://wa.me/5511916547785?text=';
+const NOMADE_WA = 'https://wa.me/5511916547785?text='
 
 export default function FeijoadaVoucher() {
-  const { code } = useParams();
-  const navigate = useNavigate();
-  const [registration, setRegistration] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const { code } = useParams()
+  const navigate = useNavigate()
+  const [reg, setReg] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  const validationUrl = `${window.location.origin}/validar/nomade?code=${code}`;
-  const whatsappUrl = `${NOMADE_WHATSAPP_BASE}${encodeURIComponent(`Olá! Resgatei meu convite da Feijoada Cortesia. Meu código é: ${code}`)}`;
+  const validationUrl = `${window.location.origin}/validar/nomade?code=${code}`
+  const whatsappUrl = `${NOMADE_WA}${encodeURIComponent('Olá! Resgatei meu convite da Feijoada Cortesia. Meu código é: ' + code)}`
 
   useEffect(() => {
-    if (!code) { navigate('/feijoada'); return; }
-
+    if (!code) { navigate('/feijoada'); return }
     async function load() {
       try {
         const { data, error: err } = await supabase
@@ -31,50 +24,38 @@ export default function FeijoadaVoucher() {
           .select('id, name, code, used, used_at')
           .eq('code', code)
           .eq('unit_slug', 'nomade')
-          .single();
-
-        if (err || !data) {
-          setError('Convite não encontrado. Verifique o código ou refaça o cadastro.');
-          return;
-        }
-        setRegistration(data);
+          .single()
+        if (err || !data) { setError('Convite não encontrado.'); return }
+        setReg(data)
       } catch (e) {
-        console.error('[FeijoadaVoucher]', e);
-        setError('Erro ao carregar convite. Tente novamente.');
+        setError('Erro ao carregar convite.')
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
     }
+    load()
+  }, [code, navigate])
 
-    load();
-  }, [code, navigate]);
+  if (loading) return (
+    <div className="min-h-screen bg-[#110f0d] flex items-center justify-center">
+      <div className="w-6 h-6 border border-[#c8b89a]/40 border-t-[#c8b89a] rounded-full animate-spin" />
+    </div>
+  )
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#110f0d] flex items-center justify-center">
-        <div className="w-6 h-6 border border-[#c8b89a]/40 border-t-[#c8b89a] rounded-full animate-spin" />
+  if (error) return (
+    <div className="min-h-screen bg-[#110f0d] flex items-center justify-center px-4">
+      <div className="text-center">
+        <p className="text-red-400 text-sm mb-4">{error}</p>
+        <button onClick={() => navigate('/feijoada')} className="text-[#c8b89a] text-xs tracking-widest uppercase underline">
+          Voltar ao cadastro
+        </button>
       </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-[#110f0d] flex items-center justify-center px-4">
-        <div className="text-center">
-          <p className="text-red-400 text-sm mb-4">{error}</p>
-          <button onClick={() => navigate('/feijoada')} className="text-[#c8b89a] text-xs tracking-widest uppercase underline">
-            Voltar ao cadastro
-          </button>
-        </div>
-      </div>
-    );
-  }
+    </div>
+  )
 
   return (
     <main className="min-h-screen bg-[#110f0d] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
-
-        {/* Logo */}
         <div className="flex justify-center mb-8">
           <img
             src="https://rfggzdohnchnnmavphrm.supabase.co/storage/v1/object/public/logos/Logo%20Nomade%20Escurol.png"
@@ -82,70 +63,45 @@ export default function FeijoadaVoucher() {
             className="h-14 object-contain"
           />
         </div>
-
-        {/* Título */}
         <div className="text-center mb-6">
           <p className="text-[#c8b89a] text-xs tracking-widest uppercase mb-2">
-            {registration?.used ? 'Convite já utilizado' : 'Seu convite está pronto'}
+            {reg?.used ? 'Convite já utilizado' : 'Seu convite está pronto'}
           </p>
           <h1 className="text-[#f4efe8] text-3xl font-black uppercase tracking-tight leading-none mb-2">
             1 Feijoada<br />Cortesia
           </h1>
-          <p className="text-[#c8b89a] text-sm tracking-wider mt-2">
-            Olá, {registration?.name?.split(' ')[0]}!
-          </p>
+          <p className="text-[#c8b89a] text-sm tracking-wider mt-2">Olá, {reg?.name?.split(' ')[0]}!</p>
           <div className="w-16 h-px bg-[#c8b89a] opacity-30 mx-auto mt-4" />
         </div>
-
-        {/* QR Code + Código */}
         <div className="border border-[#c8b89a]/20 p-6 flex flex-col items-center gap-5 mb-6">
           <div className="bg-[#f4efe8] p-3">
-            <QRCodeSVG
-              value={validationUrl}
-              size={192}
-              bgColor="#f4efe8"
-              fgColor="#1a1714"
-              level="M"
-            />
+            <QRCodeSVG value={validationUrl} size={192} bgColor="#f4efe8" fgColor="#1a1714" level="M" />
           </div>
           <div className="text-center">
             <p className="text-[#c8b89a]/60 text-xs tracking-widest uppercase mb-1">Código do convite</p>
             <p className="text-[#f4efe8] text-2xl font-mono font-bold tracking-widest">{code}</p>
           </div>
-          {registration?.used && (
+          {reg?.used && (
             <p className="text-amber-400/70 text-xs text-center">
-              Utilizado em {new Date(registration.used_at).toLocaleDateString('pt-BR')}
+              Utilizado em {new Date(reg.used_at).toLocaleDateString('pt-BR')}
             </p>
           )}
         </div>
-
-        {/* Instruções */}
         <p className="text-[#c8b89a]/60 text-xs tracking-wider text-center leading-relaxed mb-8">
           Apresente este QR Code ou o código ao chegar ao Nômade.<br />
           Válido aos sábados até as 14h · Buffet completo até as 17h.<br />
           1 convite por mesa · com 1 acompanhante pagante.
         </p>
-
-        {/* CTA WhatsApp */}
         <div className="text-center">
-          <a
-            href={whatsappUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-block border border-[#c8b89a]/40 text-[#c8b89a] text-xs tracking-widest uppercase px-8 py-4 hover:bg-[#c8b89a]/10 transition-colors"
-          >
+          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
+            className="inline-block border border-[#c8b89a]/40 text-[#c8b89a] text-xs tracking-widest uppercase px-8 py-4 hover:bg-[#c8b89a]/10 transition-colors">
             Falar com o Nômade no WhatsApp
           </a>
         </div>
-
-        {/* Rodapé */}
         <div className="text-center mt-8">
-          <p className="text-[#c8b89a]/30 text-xs">
-            Nômade · Av. Rebouças, 3400 · Pinheiros, São Paulo
-          </p>
+          <p className="text-[#c8b89a]/30 text-xs">Nômade · Av. Rebouças, 3400 · Pinheiros, São Paulo</p>
         </div>
-
       </div>
     </main>
-  );
+  )
 }

@@ -15,9 +15,9 @@
 | Navegação para o voucher | `PageView` | Ao entrar em `/feijoada/convite/:code` |
 | Botão “Quero meu convite” / envio do formulário | `CompleteRegistration` | Somente depois que o cadastro é aceito pelo backend |
 | Voucher e QR Code gerados | `Lead` | No mesmo sucesso confirmado pelo backend, antes de abrir o voucher |
-| Link ou botão de WhatsApp | `Contact` | Ao clicar em um link `wa.me`, `api.whatsapp.com`, `web.whatsapp.com` ou `whatsapp://` dentro das rotas rastreadas |
+| Botão “Falar com o Nômade no WhatsApp” | `Contact` | Ao clicar no CTA que abre o WhatsApp oficial do Nômade |
 
-O `Lead` não é disparado em cliques com formulário inválido nem em falhas de geração. A LP atual não exibe um botão de WhatsApp; o gatilho `Contact` já está preparado para qualquer link de WhatsApp que exista nessas rotas, sem exigir mudança visual.
+O `Lead` não é disparado em cliques com formulário inválido nem em falhas de geração. O CTA de WhatsApp usa o número oficial já publicado pelo Nômade (`+55 11 91654-7785`). Os eventos automáticos da Meta estão desativados para que apenas os eventos documentados sejam enviados.
 
 ## Arquivos
 

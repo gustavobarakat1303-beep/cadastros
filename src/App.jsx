@@ -20,7 +20,8 @@ const NotFound          = lazy(() => import('./pages/NotFound'))
 
 // Campanha Feijoada
 const FeijoadaRegister  = lazy(() => import('./pages/feijoada/FeijoadaRegister'))
-const FeijoadaVoucher   = lazy(() => import('./pages/feijoada/FeijoadaVoucher'))
+const FeijoadaInvite    = lazy(() => import('./pages/feijoada/FeijoadaInvite'))
+const FeijoadaValidator = lazy(() => import('./pages/feijoada/FeijoadaValidator'))
 
 function Loader() {
   return (
@@ -39,7 +40,8 @@ export default function App() {
 
         {/* Campanha Feijoada Nômade */}
         <Route path="/feijoada" element={<FeijoadaRegister />} />
-        <Route path="/feijoada/convite/:code" element={<FeijoadaVoucher />} />
+        <Route path="/feijoada/convite/:code" element={<FeijoadaInvite />} />
+        <Route path="/feijoada/validar" element={<FeijoadaValidator />} />
 
         {/* Cadastro público */}
         <Route path="/register/:unit" element={<Registration />} />

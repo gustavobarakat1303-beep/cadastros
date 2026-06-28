@@ -14,6 +14,7 @@ const Promocoes         = lazy(() => import('./pages/admin/Promocoes'))
 const Aniversarios      = lazy(() => import('./pages/admin/Aniversarios'))
 const TiposDesconto     = lazy(() => import('./pages/admin/TiposDesconto'))
 const Convites          = lazy(() => import('./pages/admin/Convites'))
+const AdminLayout       = lazy(() => import('./components/AdminLayout'))
 const ProtectedRoute    = lazy(() => import('./components/ProtectedRoute'))
 const NotFound          = lazy(() => import('./pages/NotFound'))
 
@@ -52,13 +53,17 @@ export default function App() {
         {/* Admin */}
         <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
         <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/admin/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-        <Route path="/admin/clientes" element={<ProtectedRoute><Clientes /></ProtectedRoute>} />
-        <Route path="/admin/validacoes" element={<ProtectedRoute><Validacoes /></ProtectedRoute>} />
-        <Route path="/admin/promocoes" element={<ProtectedRoute><Promocoes /></ProtectedRoute>} />
-        <Route path="/admin/aniversarios" element={<ProtectedRoute><Aniversarios /></ProtectedRoute>} />
-        <Route path="/admin/tipos-desconto" element={<ProtectedRoute><TiposDesconto /></ProtectedRoute>} />
-        <Route path="/admin/convites" element={<ProtectedRoute><Convites /></ProtectedRoute>} />
+
+        {/* Painel protegido com menu lateral (AdminLayout) */}
+        <Route element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
+          <Route path="/admin/dashboard" element={<Dashboard />} />
+          <Route path="/admin/clientes" element={<Clientes />} />
+          <Route path="/admin/validacoes" element={<Validacoes />} />
+          <Route path="/admin/promocoes" element={<Promocoes />} />
+          <Route path="/admin/aniversarios" element={<Aniversarios />} />
+          <Route path="/admin/tipos-desconto" element={<TiposDesconto />} />
+          <Route path="/admin/convites" element={<Convites />} />
+        </Route>
 
         {/* 404 */}
         <Route path="*" element={<NotFound />} />

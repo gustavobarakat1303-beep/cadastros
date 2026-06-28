@@ -2,8 +2,10 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { lazy, Suspense } from 'react'
 
 // Páginas existentes
+const Home              = lazy(() => import('./pages/Home'))
 const Registration      = lazy(() => import('./pages/Registration'))
 const Validator         = lazy(() => import('./pages/Validator'))
+const Invite            = lazy(() => import('./pages/Invite'))
 const AdminLogin        = lazy(() => import('./pages/AdminLogin'))
 const Dashboard         = lazy(() => import('./pages/admin/Dashboard'))
 const Clientes          = lazy(() => import('./pages/admin/Clientes'))
@@ -31,6 +33,9 @@ export default function App() {
   return (
     <Suspense fallback={<Loader />}>
       <Routes>
+        {/* Página inicial (e redirecionamento por domínio customizado) */}
+        <Route path="/" element={<Home />} />
+
         {/* Campanha Feijoada Nômade */}
         <Route path="/feijoada" element={<FeijoadaRegister />} />
         <Route path="/feijoada/convite/:code" element={<FeijoadaVoucher />} />
@@ -41,7 +46,11 @@ export default function App() {
         {/* Validador operacional */}
         <Route path="/validar/:unit" element={<Validator />} />
 
+        {/* Convite de fidelidade do Nômade (links já distribuídos) */}
+        <Route path="/convite/:code" element={<Invite />} />
+
         {/* Admin */}
+        <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/admin/clientes" element={<ProtectedRoute><Clientes /></ProtectedRoute>} />
